@@ -2,11 +2,9 @@ package com.nexus;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import com.nexus.exception.NexusValidationException;
 import com.nexus.model.Task;
 import com.nexus.model.User;
 import com.nexus.service.LogProcessor;
@@ -24,7 +22,6 @@ import com.nexus.service.Workspace;
 public class Main {
     private static final Scanner scanner = new Scanner(System.in);
     private static final Workspace workspace = new Workspace();
-    private static final List<User> users = new ArrayList<>();
     private static final LogProcessor logProcessor = new LogProcessor();
 
     /**
@@ -51,7 +48,7 @@ public class Main {
                     System.out.println("1. Carregar Log V1 (Básico)\n2. Carregar Log V2 (Desafio)");
                     String logChoice = scanner.nextLine();
                     String file = (logChoice.equals("1")) ? "log_v1.txt" : "log_v2.txt";
-                    logProcessor.processLog(file, workspace, users);
+                    logProcessor.processLog(file, workspace);
                 }
                 default -> System.out.println("\n[!] Opção inválida.");
             }
@@ -89,9 +86,9 @@ public class Main {
             String email = scanner.nextLine();
 
             User newUser = new User(username, email);
-            users.add(newUser);
+            workspace.addUser(newUser);
             System.out.println("[OK] Usuário cadastrado.");
-        } catch (NexusValidationException e) {
+        } catch (IllegalArgumentException e) {
             System.err.println("[ERRO] " + e.getMessage());
         }
     }
@@ -107,9 +104,14 @@ public class Main {
             String title = scanner.nextLine();
             System.out.print("Prazo (AAAA-MM-DD): ");
             LocalDate deadline = LocalDate.parse(scanner.nextLine());
+            System.out.println("Esforço Estimado(Horas): ");
+            String effort = scanner.nextLine();
+            System.out.println("Nome do Projeto: ");
+            String projectName = scanner.nextLine();
 
-            Task newTask = new Task(title, deadline);
+            Task newTask = new Task(title, deadline, Integer.parseInt(effort), projectName);
             workspace.addTask(newTask);
+            
             System.out.println("[OK] Tarefa adicionada ao backlog.");
         } catch (DateTimeParseException e) {
             System.err.println("[ERRO] Formato de data inválido. Use AAAA-MM-DD.");
@@ -128,17 +130,19 @@ public class Main {
             return;
         }
 
-        String header = "+----+----------------------+-------------+------------+";
+        String header = "+----+----------------------+-------------+------------+------------+------------+";
         System.out.println("\n" + header);
-        System.out.printf("| %-2s | %-20s | %-11s | %-10s |%n", "ID", "TÍTULO", "STATUS", "DEADLINE");
+        System.out.printf("| %-2s | %-20s | %-11s | %-10s | %-10s | %-10s |%n", "ID", "TÍTULO", "STATUS", "DEADLINE", "EFFORT", "PROJECT");
         System.out.println(header);
 
         for (Task t : tasks) {
-            System.out.printf("| %-2d | %-20s | %-11s | %-10s |%n",
+            System.out.printf("| %-2s | %-20s | %-11s | %-10s | %-10s | %-10s |%n",
                     t.getId(),
                     truncar(t.getTitle(), 20),
                     t.getStatus(),
-                    t.getDeadline());
+                    t.getDeadline(),
+                    t.getEstimatedEffort(),
+                    t.getProjectName());
         }
         System.out.println(header);
         System.out.println("Total de tarefas: " + Task.totalTasksCreated);
