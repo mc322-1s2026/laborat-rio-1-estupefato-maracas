@@ -2,6 +2,8 @@ package com.nexus.model;
 
 import java.time.LocalDate;
 
+import com.nexus.exception.NexusValidationException;
+
 public class Task {
     // Métricas Globais (Alunos implementam a lógica de incremento/decremento)
     public static int totalTasksCreated = 0;
@@ -10,18 +12,27 @@ public class Task {
 
     private static int nextId = 1;
 
-    private int id;
-    private LocalDate deadline; // Imutável após o nascimento
+    private final int id;
+    private final LocalDate deadline;
     private String title;
     private TaskStatus status;
     private User owner;
+    private int estimatedEffort;
+    private String linkedProjectName;
 
-    public Task(String title, LocalDate deadline) {
+    public static void throwNexusError(String message) {
+        totalValidationErrors++;
+        throw new NexusValidationException(message);
+    }
+
+    public Task(String title, LocalDate deadline, int estimatedEffort, String linkedProjectName) {
         this.id = nextId++;
         this.deadline = deadline;
         this.title = title;
         this.status = TaskStatus.TO_DO;
-        
+        this.estimatedEffort = estimatedEffort;
+        this.linkedProjectName = linkedProjectName;
+
         // Ação do Aluno:
         totalTasksCreated++; 
     }
@@ -30,9 +41,25 @@ public class Task {
      * Move a tarefa para IN_PROGRESS.
      * Regra: Só é possível se houver um owner atribuído e não estiver BLOCKED.
      */
-    public void moveToInProgress(User user) {
+    public void moveToInProgress() {
         // TODO: Implementar lógica de proteção e atualizar activeWorkload
         // Se falhar, incrementar totalValidationErrors e lançar NexusValidationException
+        if (this.owner != null && this.status == TaskStatus.TO_DO) {
+            this.status = TaskStatus.IN_PROGRESS;
+            activeWorkload++;
+        }
+        else {
+            throwNexusError("Estado da Task não pode ser alterado.");
+        }
+    }
+
+    public void assignUser(User user) {
+        if (user != null) {
+            this.owner = user;
+        }
+        else {  
+            throwNexusError("Usuário inválido");
+        }
     }
 
     /**
@@ -41,12 +68,25 @@ public class Task {
      */
     public void markAsDone() {
         // TODO: Implementar lógica de proteção e atualizar activeWorkload (decrementar)
+        if (status != TaskStatus.BLOCKED) {
+            if (status == TaskStatus.IN_PROGRESS) {
+                activeWorkload--;
+            }
+            status = TaskStatus.DONE;
+        }
+        else{
+            throwNexusError("Tarefa bloqueada, não pode ser concluída.");
+        }
     }
 
     public void setBlocked(boolean blocked) {
         if (blocked) {
+            if (status == TaskStatus.DONE) {
+                throwNexusError("Tarefa concluída, não pode ser bloqueada.");
+            }
+
             this.status = TaskStatus.BLOCKED;
-        } else {
+        } else if (status == TaskStatus.BLOCKED) {
             this.status = TaskStatus.TO_DO; // Simplificação para o Lab
         }
     }
@@ -57,4 +97,6 @@ public class Task {
     public String getTitle() { return title; }
     public LocalDate getDeadline() { return deadline; }
     public User getOwner() { return owner; }
+    public int getEstimatedEffort() {return estimatedEffort; }
+    public String getProjectName() {return !linkedProjectName.isEmpty() && !linkedProjectName.isBlank() ? linkedProjectName : "N/A"; }
 }
