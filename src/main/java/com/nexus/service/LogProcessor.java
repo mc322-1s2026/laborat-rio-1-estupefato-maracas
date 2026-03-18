@@ -8,7 +8,7 @@ import java.util.List;
 
 public class LogProcessor {
 
-    public void processLog(String fileName, Workspace workspace, List<User> users) {
+    public void processLog(String fileName, Workspace workspace) {
         try {
             // Busca o arquivo dentro da pasta de recursos do projeto (target/classes)
             var resource = getClass().getClassLoader().getResourceAsStream(fileName);
@@ -30,12 +30,13 @@ public class LogProcessor {
                     try {
                         switch (action) {
                             case "CREATE_USER" -> {
-                                users.add(new User(p[1], p[2]));
+                                workspace.addUser(new User(p[1], p[2]));
                                 System.out.println("[LOG] Usuário criado: " + p[1]);
                             }
                             case "CREATE_TASK" -> {
-                                Task t = new Task(p[1], LocalDate.parse(p[2]));
+                                Task t = new Task(p[1], LocalDate.parse(p[2]), Integer.parseInt(p[3]), p[4]);
                                 workspace.addTask(t);
+
                                 System.out.println("[LOG] Tarefa criada: " + p[1]);
                             }
                             default -> System.err.println("[WARN] Ação desconhecida: " + action);
