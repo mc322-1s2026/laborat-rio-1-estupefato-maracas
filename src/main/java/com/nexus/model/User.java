@@ -26,11 +26,11 @@ public class User {
         return !emailPattern.matcher(email).matches();
     }
 
-    public String consultEmail() {
+    public String getEmail() {
         return email;
     }
 
-    public String consultUsername() {
+    public String getUsername() {
         return username;
     }
 
