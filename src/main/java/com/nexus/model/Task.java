@@ -91,6 +91,24 @@ public class Task {
         }
     }
 
+    public void changeStatus(TaskStatus status) {
+        if (status == TaskStatus.BLOCKED) {
+            setBlocked(true);
+        }
+        else if (status == TaskStatus.IN_PROGRESS) {
+            moveToInProgress();
+        }
+        else if (status == TaskStatus.DONE) {
+            markAsDone();
+        }
+        else if (status == TaskStatus.TO_DO) {
+            status = TaskStatus.TO_DO;
+        }
+        else {
+            throwNexusError("Incapaz de mudar status da task.");
+        }
+    }
+
     // Getters
     public int getId() { return id; }
     public TaskStatus getStatus() { return status; }
