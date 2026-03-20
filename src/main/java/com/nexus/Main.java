@@ -2,9 +2,12 @@ package com.nexus;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
+import com.nexus.exception.NexusValidationException;
+import com.nexus.model.Project;
 import com.nexus.model.Task;
 import com.nexus.model.User;
 import com.nexus.service.LogProcessor;
@@ -23,6 +26,7 @@ public class Main {
     private static final Scanner scanner = new Scanner(System.in);
     private static final Workspace workspace = new Workspace();
     private static final LogProcessor logProcessor = new LogProcessor();
+    private static HashMap<String, Project> projects = new HashMap<>();
 
     /**
      * Inicia a aplicação e processa comandos do usuário até a terminação.
@@ -42,9 +46,10 @@ public class Main {
                     running = false;
                 }
                 case "1" -> addUser();
-                case "2" -> addTask();
-                case "3" -> listTasks();
-                case "4" -> {
+                case "2" -> addProject();
+                case "3" -> addTask();
+                case "4" -> listTasks();
+                case "5" -> {
                     System.out.println("1. Carregar Log V1 (Básico)\n2. Carregar Log V2 (Desafio)");
                     String logChoice = scanner.nextLine();
                     String file = (logChoice.equals("1")) ? "log_v1.txt" : "log_v2.txt";
@@ -66,9 +71,10 @@ public class Main {
             
             ======= NEXUS CORE: MENU =======
             1. Adicionar Usuário
-            2. Adicionar Tarefa
-            3. Listar Todas as Tarefas
-            4. Processar Log de Ações
+            2. Adicionar Projeto
+            3. Adicionar Tarefa
+            4. Listar Todas as Tarefas
+            5. Processar Log de Ações
             0. Sair
             Escolha uma opção:\s""");
     }
@@ -94,28 +100,73 @@ public class Main {
     }
 
     /**
+     * Cria um novo {@link Project} com o nome e orçamento (em horas) fornecidos
+     * pelo usuário, e então o adiciona ao backlog de projetos.
+     * O nome de cada projeto deve ser único.
+     * Erros são relatados no stderr.
+     */
+    private static void addProject() {
+        System.out.print("Nome do projeto: ");
+        String projectName = scanner.nextLine().strip();
+        if (projects.containsKey(projectName)) {
+            System.err.println("[ERRO] Já existe outro projeto com esse nome.");
+            return;
+        }
+        System.out.print("Orçamento (horas): ");
+        int budgetHours;
+        try {
+            budgetHours = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.err.println("[ERRO] Parâmetro de horas inválido, digite um número inteiro.");
+            return;
+        }
+
+        projects.put(projectName, new Project(projectName, budgetHours));
+
+        System.out.println("[OK] Projeto criado.");
+    }
+
+    /**
      * Coleta detalhes da tarefa do usuário, constrói uma {@link Task} e
      * a acrescenta ao workspace. Erros de parsing de data são informados no
      * stderr.
      */
     private static void addTask() {
+        System.out.print("Título da Tarefa: ");
+        String title = scanner.nextLine();
+        System.out.print("Prazo (AAAA-MM-DD): ");
+        LocalDate deadline;
         try {
-            System.out.print("Título da Tarefa: ");
-            String title = scanner.nextLine();
-            System.out.print("Prazo (AAAA-MM-DD): ");
-            LocalDate deadline = LocalDate.parse(scanner.nextLine());
-            System.out.println("Esforço Estimado(Horas): ");
-            String effort = scanner.nextLine();
-            System.out.println("Nome do Projeto: ");
-            String projectName = scanner.nextLine();
-
-            Task newTask = new Task(title, deadline, Integer.parseInt(effort), projectName);
-            workspace.addTask(newTask);
-            
-            System.out.println("[OK] Tarefa adicionada ao backlog.");
+            deadline = LocalDate.parse(scanner.nextLine());
         } catch (DateTimeParseException e) {
             System.err.println("[ERRO] Formato de data inválido. Use AAAA-MM-DD.");
+            return;
         }
+        System.out.print("Esforço Estimado (Horas): ");
+        int effort;
+        try {
+            effort = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.err.println("[ERRO] Parâmetro de horas inválido, digite um número inteiro.");
+            return;
+        }
+        System.out.print("Nome do Projeto: ");
+        String projectName = scanner.nextLine().strip();
+        if (!projects.containsKey(projectName)) {
+            System.err.println("[ERRO] Não existe um projeto com esse nome.");
+            return;
+        }
+
+        Task newTask = new Task(title, deadline, effort, projectName);
+        try {
+            projects.get(projectName).addTask(newTask);
+        } catch (NexusValidationException e) {
+            System.err.println("[ERRO] " + e.getMessage());
+            return;
+        }
+        workspace.addTask(newTask);
+        
+        System.out.println("[OK] Tarefa adicionada ao backlog.");
     }
 
     /**
