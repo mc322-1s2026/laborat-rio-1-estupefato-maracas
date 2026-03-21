@@ -48,6 +48,12 @@ public class Workspace {
                        .orElse(null);
     }
 
+    public List<User> overloadedUsers() {
+        return users.stream()
+                    .filter(u -> u.getWorkload(tasks) >= 10)
+                    .toList();
+    }
+
     public long countDoneTasksForUser(User u) {
         return tasks.stream()
                     .filter(t -> t.getStatus() == TaskStatus.DONE && t.getOwner() != null && t.getOwner().equals(u))

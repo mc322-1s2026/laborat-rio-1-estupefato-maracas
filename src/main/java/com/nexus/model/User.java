@@ -1,5 +1,6 @@
 package com.nexus.model;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class User {
@@ -34,7 +35,9 @@ public class User {
         return username;
     }
 
-    public long calculateWorkload() {
-        return 0; 
+    public long getWorkload(List<Task> tasks) {
+        return tasks.stream()
+            .filter(t -> t.getStatus() == TaskStatus.IN_PROGRESS && t.getOwner().getUsername().equals(username))
+            .count();
     }
 }
