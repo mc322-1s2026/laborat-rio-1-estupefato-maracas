@@ -9,6 +9,7 @@ import java.util.Scanner;
 import com.nexus.exception.NexusValidationException;
 import com.nexus.model.Project;
 import com.nexus.model.Task;
+import com.nexus.model.TaskStatus;
 import com.nexus.model.User;
 import com.nexus.service.LogProcessor;
 import com.nexus.service.Workspace;
@@ -48,8 +49,11 @@ public class Main {
                 case "1" -> addUser();
                 case "2" -> addProject();
                 case "3" -> addTask();
-                case "4" -> listTasks();
-                case "5" -> {
+                case "4" -> assignUser();
+                case "5" -> changeStatus();
+                case "6" -> reportStatus();
+                case "7" -> listTasks();
+                case "8" -> {
                     System.out.println("1. Carregar Log V1 (Básico)\n2. Carregar Log V2 (Desafio)");
                     String logChoice = scanner.nextLine();
                     String file = (logChoice.equals("1")) ? "log_v1.txt" : "log_v2.txt";
@@ -73,8 +77,11 @@ public class Main {
             1. Adicionar Usuário
             2. Adicionar Projeto
             3. Adicionar Tarefa
-            4. Listar Todas as Tarefas
-            5. Processar Log de Ações
+            4. Atribuir Usuário à Tarefa
+            5. Mudar Estado
+            6. Reportar Estado
+            7. Listar Todas as Tarefas
+            8. Processar Log de Ações
             0. Sair
             Escolha uma opção:\s""");
     }
@@ -95,7 +102,7 @@ public class Main {
             workspace.addUser(newUser);
             System.out.println("[OK] Usuário cadastrado.");
         } catch (IllegalArgumentException e) {
-            System.err.println("[ERRO] " + e.getMessage());
+            System.err.println("[ERRO DE INPUT] " + e.getMessage());
         }
     }
 
@@ -109,7 +116,7 @@ public class Main {
         System.out.print("Nome do projeto: ");
         String projectName = scanner.nextLine().strip();
         if (projects.containsKey(projectName)) {
-            System.err.println("[ERRO] Já existe outro projeto com esse nome.");
+            System.err.println("[ERRO DE INPUT] Já existe outro projeto com esse nome.");
             return;
         }
         System.out.print("Orçamento (horas): ");
@@ -117,11 +124,13 @@ public class Main {
         try {
             budgetHours = Integer.parseInt(scanner.nextLine());
         } catch (NumberFormatException e) {
-            System.err.println("[ERRO] Parâmetro de horas inválido, digite um número inteiro.");
+            System.err.println("[ERRO DE INPUT] Parâmetro de horas inválido, digite um número inteiro.");
             return;
         }
 
-        projects.put(projectName, new Project(projectName, budgetHours));
+        Project project = new Project(projectName, budgetHours);
+        
+        workspace.addProject(project);
 
         System.out.println("[OK] Projeto criado.");
     }
@@ -139,7 +148,7 @@ public class Main {
         try {
             deadline = LocalDate.parse(scanner.nextLine());
         } catch (DateTimeParseException e) {
-            System.err.println("[ERRO] Formato de data inválido. Use AAAA-MM-DD.");
+            System.err.println("[ERRO DE INPUT] Formato de data inválido. Use AAAA-MM-DD.");
             return;
         }
         System.out.print("Esforço Estimado (Horas): ");
@@ -147,13 +156,13 @@ public class Main {
         try {
             effort = Integer.parseInt(scanner.nextLine());
         } catch (NumberFormatException e) {
-            System.err.println("[ERRO] Parâmetro de horas inválido, digite um número inteiro.");
+            System.err.println("[ERRO DE INPUT] Parâmetro de horas inválido, digite um número inteiro.");
             return;
         }
         System.out.print("Nome do Projeto: ");
         String projectName = scanner.nextLine().strip();
         if (!projects.containsKey(projectName)) {
-            System.err.println("[ERRO] Não existe um projeto com esse nome.");
+            System.err.println("[ERRO DE INPUT] Não existe um projeto com esse nome.");
             return;
         }
 
@@ -161,12 +170,81 @@ public class Main {
         try {
             projects.get(projectName).addTask(newTask);
         } catch (NexusValidationException e) {
-            System.err.println("[ERRO] " + e.getMessage());
+            System.err.println("[ERRO DE REGRAS] " + e.getMessage());
             return;
         }
         workspace.addTask(newTask);
         
         System.out.println("[OK] Tarefa adicionada ao backlog.");
+    }
+
+    public static void assignUser() {
+        System.out.println("Id da Tarefa: ");
+        String id = scanner.nextLine();
+        Task task = null;
+        try {
+            task = workspace.findTaskById(Integer.parseInt(id));
+            if (task == null) {
+                System.err.println("Tarefa não existe.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("[ERRO DE INPUT] Parâmetro inválido, digite número inteiro.");
+            return;
+        }
+
+        System.out.println("Nome do usuário: ");
+        String username = scanner.nextLine();
+
+        User user = workspace.findUserByName(username);
+        if (user == null) {
+            System.err.println("Usuário não existe.");
+            return;
+        }
+
+        try {
+            task.assignUser(user);
+            System.out.println("[OK] Usuário atribuído com sucesso.");
+        } catch (NexusValidationException e) {
+            System.err.println("[ERRO DE REGRAS] " + e.getMessage());
+        }
+    }
+
+    public static void changeStatus() {
+        System.out.println("Id da Tarefa: ");
+        String id = scanner.nextLine();
+        Task task = null;
+        try {
+            task = workspace.findTaskById(Integer.parseInt(id));
+            if (task == null) {
+                System.err.println("Tarefa não existe.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("[ERRO DE INPUT] Parâmetro inválido, digite número inteiro.");
+            return;
+        }
+
+        System.out.println("Novo Estado: ");
+        String statusStr = scanner.nextLine();
+        
+        try {
+            TaskStatus novoStatus = TaskStatus.valueOf(statusStr.toUpperCase());
+            
+            task.changeStatus(novoStatus);
+            
+            System.out.println("[OK] Status alterado com sucesso para " + novoStatus);
+            
+        } catch (IllegalArgumentException e) {
+            System.err.println("[ERRO DE INPUT] Status '" + statusStr + "' não existe. Use: TO_DO, IN_PROGRESS, BLOCKED ou DONE.");
+            
+        } catch (NexusValidationException e) {
+            System.err.println("[ERRO DE REGRAS] " + e.getMessage());
+        }
+    }
+
+    public static void reportStatus() {
+        
     }
 
     /**

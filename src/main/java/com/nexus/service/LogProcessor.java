@@ -65,6 +65,8 @@ public class LogProcessor {
                         }
                     } catch (NexusValidationException e) {
                         System.err.println("[ERRO DE REGRAS] Falha no comando '" + line + "': " + e.getMessage());
+                    } catch (IllegalArgumentException e) {
+                        System.err.println("[ERRO DE INPUT] Input incorreto no comando '" + line + "': " +  e.getMessage());
                     }
                 }
             }

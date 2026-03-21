@@ -58,6 +58,9 @@ public class Workspace {
     }
 
     public double projectHealth(Project project) {
+        if (project.getTotalTasks() == 0) {
+            return 0;
+        }
         return (double) project.getTasks().stream()
                       .filter(t -> t.getStatus() == TaskStatus.DONE)
                       .count() / project.getTasks().size();
