@@ -58,7 +58,7 @@ public class Task {
             this.owner = user;
         }
         else {  
-            throwNexusError("Usuário inválido");
+            throw new IllegalArgumentException("Usuário inválido.");
         }
     }
 
