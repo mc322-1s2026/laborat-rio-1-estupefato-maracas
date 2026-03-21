@@ -43,4 +43,9 @@ public class Project {
     public int getTotalBudget() {
         return totalBudget;
     }
+
+    public int getTotalTasks() {
+        if (tasks == null) {return 0; }
+        return (int) tasks.size();
+    }
 }
