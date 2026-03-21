@@ -27,7 +27,6 @@ public class Main {
     private static final Scanner scanner = new Scanner(System.in);
     private static final Workspace workspace = new Workspace();
     private static final LogProcessor logProcessor = new LogProcessor();
-    private static HashMap<String, Project> projects = new HashMap<>();
 
     /**
      * Inicia a aplicação e processa comandos do usuário até a terminação.
@@ -115,10 +114,12 @@ public class Main {
     private static void addProject() {
         System.out.print("Nome do projeto: ");
         String projectName = scanner.nextLine().strip();
-        if (projects.containsKey(projectName)) {
+        
+        if (workspace.findProjectByName(projectName) != null) {
             System.err.println("[ERRO DE INPUT] Já existe outro projeto com esse nome.");
             return;
         }
+
         System.out.print("Orçamento (horas): ");
         int budgetHours;
         try {
@@ -129,7 +130,6 @@ public class Main {
         }
 
         Project project = new Project(projectName, budgetHours);
-        
         workspace.addProject(project);
 
         System.out.println("[OK] Projeto criado.");
@@ -143,6 +143,7 @@ public class Main {
     private static void addTask() {
         System.out.print("Título da Tarefa: ");
         String title = scanner.nextLine();
+        
         System.out.print("Prazo (AAAA-MM-DD): ");
         LocalDate deadline;
         try {
@@ -151,6 +152,7 @@ public class Main {
             System.err.println("[ERRO DE INPUT] Formato de data inválido. Use AAAA-MM-DD.");
             return;
         }
+        
         System.out.print("Esforço Estimado (Horas): ");
         int effort;
         try {
@@ -159,23 +161,27 @@ public class Main {
             System.err.println("[ERRO DE INPUT] Parâmetro de horas inválido, digite um número inteiro.");
             return;
         }
+        
         System.out.print("Nome do Projeto: ");
         String projectName = scanner.nextLine().strip();
-        if (!projects.containsKey(projectName)) {
+        
+        Project project = workspace.findProjectByName(projectName);
+        if (project == null) {
             System.err.println("[ERRO DE INPUT] Não existe um projeto com esse nome.");
             return;
         }
 
         Task newTask = new Task(title, deadline, effort, projectName);
+        
         try {
-            projects.get(projectName).addTask(newTask);
+            project.addTask(newTask);
+            
+            workspace.addTask(newTask);
+            System.out.println("[OK] Tarefa adicionada ao backlog.");
+            
         } catch (NexusValidationException e) {
             System.err.println("[ERRO DE REGRAS] " + e.getMessage());
-            return;
         }
-        workspace.addTask(newTask);
-        
-        System.out.println("[OK] Tarefa adicionada ao backlog.");
     }
 
     public static void assignUser() {
