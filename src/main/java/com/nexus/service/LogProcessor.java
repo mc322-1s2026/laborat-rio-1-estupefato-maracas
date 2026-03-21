@@ -4,6 +4,7 @@ import com.nexus.model.*;
 import com.nexus.exception.NexusValidationException;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 public class LogProcessor {
@@ -33,6 +34,11 @@ public class LogProcessor {
                                 workspace.addUser(new User(p[1], p[2]));
                                 System.out.println("[LOG] Usuário criado: " + p[1]);
                             }
+                            case "CREATE_PROJECT" -> {
+                                Project project = new Project(p[1], Integer.parseInt(p[2]));
+                                workspace.addProject(project);
+                                System.out.println("[LOG] Projeto criado: " + p[1]);
+                            }
                             case "CREATE_TASK" -> {
                                 Task t = new Task(p[1], LocalDate.parse(p[2]), Integer.parseInt(p[3]), p[4]);
                                 workspace.addTask(t);
@@ -42,11 +48,6 @@ public class LogProcessor {
                                 }
 
                                 System.out.println("[LOG] Tarefa criada: " + p[1]);
-                            }
-                            case "CREATE_PROJECT" -> {
-                                Project project = new Project(p[1], Integer.parseInt(p[2]));
-                                workspace.addProject(project);
-                                System.out.println("[LOG] Projeto criado: " + p[1]);
                             }
                             case "ASSIGN_USER" -> {
                                 Task task = workspace.findTaskById(Integer.parseInt(p[1]));
@@ -65,7 +66,7 @@ public class LogProcessor {
                         }
                     } catch (NexusValidationException e) {
                         System.err.println("[ERRO DE REGRAS] Falha no comando '" + line + "': " + e.getMessage());
-                    } catch (IllegalArgumentException e) {
+                    } catch (IllegalArgumentException | DateTimeParseException e) {
                         System.err.println("[ERRO DE INPUT] Input incorreto no comando '" + line + "': " +  e.getMessage());
                     }
                 }
