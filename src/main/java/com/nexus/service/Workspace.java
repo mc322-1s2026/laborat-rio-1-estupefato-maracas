@@ -8,6 +8,10 @@ import com.nexus.model.Project;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.Collections;
 
 public class Workspace {
@@ -52,6 +56,22 @@ public class Workspace {
         return users.stream()
                     .filter(u -> u.getWorkload(tasks) >= 10)
                     .toList();
+    }
+
+    public double projectHealth(Project project) {
+        return (double) project.getTasks().stream()
+                      .filter(t -> t.getStatus() == TaskStatus.DONE)
+                      .count() / project.getTasks().size();
+    }
+
+    public TaskStatus globalBottleneck() {
+        return tasks.stream()
+                    .filter(t -> t.getStatus() != TaskStatus.DONE)
+                    .collect(Collectors.groupingBy(Task::getStatus, Collectors.counting()))
+                    .entrySet().stream()
+                    .max(Entry.comparingByValue())
+                    .map(Entry::getKey)
+                    .orElse(null);
     }
 
     public long countDoneTasksForUser(User u) {
