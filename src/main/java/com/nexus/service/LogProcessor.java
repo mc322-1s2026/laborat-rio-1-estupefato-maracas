@@ -36,8 +36,30 @@ public class LogProcessor {
                             case "CREATE_TASK" -> {
                                 Task t = new Task(p[1], LocalDate.parse(p[2]), Integer.parseInt(p[3]), p[4]);
                                 workspace.addTask(t);
+                                Project project = workspace.findProjectByName(p[4]);
+                                if (project != null) {
+                                    project.addTask(t);
+                                }
 
                                 System.out.println("[LOG] Tarefa criada: " + p[1]);
+                            }
+                            case "CREATE_PROJECT" -> {
+                                Project project = new Project(p[1], Integer.parseInt(p[2]));
+                                workspace.addProject(project);
+                                System.out.println("[LOG] Projeto criado: " + p[1]);
+                            }
+                            case "ASSIGN_USER" -> {
+                                Task task = workspace.findTaskById(Integer.parseInt(p[1]));
+                                task.assignUser(workspace.findUserByName(p[2]));
+                                System.out.println("[LOG] Tarefa atribuída a usuário");
+                            }
+                            case "CHANGE_STATUS" -> {
+                                Task task = workspace.findTaskById(Integer.parseInt(p[1]));
+                                task.changeStatus(TaskStatus.valueOf(p[2]));
+                                System.out.println("[LOG] Status alterado com sucesso");
+                            }
+                            case "REPORT_STATUS" -> {
+                                // continue when stream api at workspace when is done
                             }
                             default -> System.err.println("[WARN] Ação desconhecida: " + action);
                         }
