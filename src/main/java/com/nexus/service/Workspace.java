@@ -8,6 +8,8 @@ import com.nexus.model.Project;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.Collections;
 
 public class Workspace {
@@ -35,10 +37,10 @@ public class Workspace {
     }
 
     public User findUserByName(String name) {
-    return users.stream()  
-                .filter(u -> u.getUsername().equals(name))
-                .findFirst()
-                .orElse(null);
+        return users.stream()  
+                    .filter(u -> u.getUsername().equals(name))
+                    .findFirst()
+                    .orElse(null);
     }
 
     public Project findProjectByName(String projectName) {
@@ -50,8 +52,21 @@ public class Workspace {
 
     public long countDoneTasksForUser(User u) {
         return tasks.stream()
-                    .filter(t -> t.getStatus() == TaskStatus.DONE && t.getOwner() != null && t.getOwner().equals(u))
+                    .filter(t -> t.getStatus() == TaskStatus.DONE
+                            && t.getOwner() != null && t.getOwner().equals(u))
                     .count();
+    }
+
+    public List<User> topPerformers(int n) {
+        return tasks.stream()
+            .filter(t -> t.getStatus() == TaskStatus.DONE)
+            .map(t -> t.getOwner())
+            .collect(Collectors.groupingBy(user -> user, Collectors.counting()))
+            .entrySet().stream()
+            .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+            .limit(n)
+            .map(p -> p.getKey())
+            .toList();
     }
 
     public List<Task> getTasks() {return Collections.unmodifiableList(tasks); }
