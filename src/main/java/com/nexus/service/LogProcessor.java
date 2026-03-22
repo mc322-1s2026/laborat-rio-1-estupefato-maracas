@@ -92,30 +92,9 @@ public class LogProcessor {
 
     private void reportStatus(Workspace workspace, String[] p) {
         System.out.println("[LOG] Relatórios analíticos:");
-        System.out.print("    - Top 3 Performers: | ");
-        int i = 1;
-        for (User user: workspace.topPerformers(3)) {
-            System.out.printf("#%d %s | ", i++, user.getUsername());
-        }
-        System.out.println();
-        System.out.print("    - Overloaded Users: ");
-        List<User> overloaded = workspace.overloadedUsers();
-        if (overloaded.isEmpty()) {
-            System.out.println("Nenhum");
-        } else {
-            List<String> nomesSobrecarregados = overloaded.stream()
-                                                          .map(User::getUsername)
-                                                          .toList();
-            System.out.println(nomesSobrecarregados);
-        }
-        System.out.println("    - Project Health: ");
-        workspace.getProjects().stream()
-                .forEach(proj -> System.out.printf(
-                        "        - %s: %d%%\n",
-                        proj.getName(),
-                        Math.round(workspace.projectHealth(proj) * 100)
-                    ));
-        System.out.println("    - Global Bottleneck: " + 
-            (workspace.globalBottleneck() != null ? workspace.globalBottleneck() : "Nenhum"));
+        workspace.printTopPerformers();
+        workspace.printOverloadedUsers();
+        workspace.printProjectHealth();
+        workspace.printGlobalBottleneck();
     }
 }
