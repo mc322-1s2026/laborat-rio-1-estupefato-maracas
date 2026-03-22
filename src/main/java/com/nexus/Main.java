@@ -15,16 +15,24 @@ import com.nexus.service.Workspace;
 
 /**
  * Ponto de entrada para a aplicação Nexus.
- * *
- * Esta classe fornece uma interface simples baseada em console usada no
+ * <p>Esta classe fornece uma interface simples baseada em console usada no
  * trabalho de laboratório. Gerencia uma coleção de {@link User usuários}
  * e um {@link Workspace} onde as {@link Task tarefas} são armazenadas. As
  * operações são realizadas através de um laço de menu e delegadas a métodos
  * auxiliares.
  */
 public class Main {
+    /**
+     * Scanner para leitura de entrada do usuário.
+     */
     private static final Scanner scanner = new Scanner(System.in);
+    /**
+     * Workspace central que armazena tarefas, usuários e projetos.
+     */
     private static final Workspace workspace = new Workspace();
+    /**
+     * Processador de logs para executar comandos em lote.
+     */
     private static final LogProcessor logProcessor = new LogProcessor();
 
     /**
@@ -93,6 +101,10 @@ public class Main {
         try {
             System.out.print("Username: ");
             String username = scanner.nextLine();
+            if (workspace.findUserByName(username) != null) {
+                System.err.println("[ERRO DE ENTRADA] Já existe outro usuário com esse nome.");
+                return;
+            }
             System.out.print("Email: ");
             String email = scanner.nextLine();
 
@@ -184,12 +196,11 @@ public class Main {
     }
 
     /**
-     * Solicita ao usuário o ID de uma tarefa e o nome de um {@link User},
-     * realizando a atribuição (owner) da tarefa caso ambos existam.
-     * Erros de formatação de ID ou violações de regras de negócio 
-     * são relatados no fluxo de erro stderr.
+     * Atribui um usuário dono a uma tarefa existente.
+     * Procura a tarefa pelo ID e o usuário pelo nome, validando se ambos existem
+     * antes de realizar a atribuição. Exceções são reportadas no stderr.
      */
-    public static void assignUser() {
+    private static void assignUser() {
         System.out.println("Id da Tarefa: ");
         String id = scanner.nextLine();
         Task task = null;
@@ -222,12 +233,12 @@ public class Main {
     }
 
     /**
-     * Solicita o ID de uma tarefa e o novo estado desejado,
-     * acionando a máquina de estados para realizar a transição na {@link Task}.
+     * Altera o status de uma tarefa existente através da máquina de estados.
+     * Procura a tarefa pelo ID e executa a mudança de status se válida.
      * Erros de digitação de status ou violações das regras de transição
-     * são relatados no fluxo de erro stderr.
+     * são reportados no stderr.
      */
-    public static void changeStatus() {
+    private static void changeStatus() {
         System.out.println("Id da Tarefa: ");
         String id = scanner.nextLine();
         Task task = null;
@@ -261,11 +272,12 @@ public class Main {
     }
 
     /**
-     * Exibe no console um painel analítico com métricas globais do sistema.
-     * Invoca os relatórios do {@link Workspace} para listar top performers,
-     * usuários sobrecarregados, gargalos globais e a saúde atual dos projetos.
+     * Exibe um painel analítico no console com métricas globais do sistema.
+     * Mostra o total de tarefas criadas, erros de validação, carga ativa,
+     * e invoca relatórios do {@link Workspace} para listar top performers,
+     * usuários sobrecarregados, gargalos globais e saúde dos projetos.
      */
-    public static void reportStatus() {
+    private static void reportStatus() {
         System.out.println("\n====== NEXUS GLOBAL REPORT ======");
         System.out.println("Total de Tarefas Criadas: " + Task.totalTasksCreated);
         System.out.println("Total de Erros de Regra: " + Task.totalValidationErrors);
@@ -278,9 +290,9 @@ public class Main {
     }
 
     /**
-     * Exibe todas as tarefas atualmente armazenadas no {@link Workspace} em
-     * formato de tabela simples. Se não existirem tarefas, imprime uma mensagem
-     * de notificação.
+     * Exibe uma tabela formatada com todas as tarefas no workspace.
+     * Mostra ID, título, status, prazo, esforço estimado e projeto vinculado.
+     * Se não houver tarefas, um aviso é exibido.
      */
     private static void listTasks() {
         List<Task> tasks = workspace.getTasks();
