@@ -106,7 +106,7 @@ public class Main {
 
     /**
      * Cria um novo {@link Project} com o nome e orçamento (em horas) fornecidos
-     * pelo usuário, e então o adiciona ao backlog de projetos.
+     * pelo usuário, o adicionando ao backlog de projetos.
      * O nome de cada projeto deve ser único.
      * Erros são relatados no stderr.
      */
@@ -187,7 +187,7 @@ public class Main {
      * Solicita ao usuário o ID de uma tarefa e o nome de um {@link User},
      * realizando a atribuição (owner) da tarefa caso ambos existam.
      * Erros de formatação de ID ou violações de regras de negócio 
-     * são relatados no fluxo de erro (stderr).
+     * são relatados no fluxo de erro stderr.
      */
     public static void assignUser() {
         System.out.println("Id da Tarefa: ");
@@ -222,10 +222,10 @@ public class Main {
     }
 
     /**
-     * Solicita o ID de uma tarefa e o novo estado (status) desejado,
+     * Solicita o ID de uma tarefa e o novo estado desejado,
      * acionando a máquina de estados para realizar a transição na {@link Task}.
      * Erros de digitação de status ou violações das regras de transição
-     * são relatados no fluxo de erro (stderr).
+     * são relatados no fluxo de erro stderr.
      */
     public static void changeStatus() {
         System.out.println("Id da Tarefa: ");
