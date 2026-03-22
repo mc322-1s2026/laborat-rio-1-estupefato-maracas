@@ -20,11 +20,19 @@ public class Task {
     private int estimatedEffort;
     private String linkedProjectName;
 
+    /**
+     * Lança uma {@link NexusValidationException} e incrementa a métrica global
+     * de erros de validação do sistema.
+     */
     public static void throwNexusError(String message) {
         totalValidationErrors++;
         throw new NexusValidationException(message);
     }
 
+    /**
+     * Constrói uma nova tarefa, inicializando-a com o status {@link TaskStatus.TO_DO}
+     * e incrementando o contador global de tarefas criadas no sistema.
+     */
     public Task(String title, LocalDate deadline, int estimatedEffort, String linkedProjectName) {
         this.id = nextId++;
         this.deadline = deadline;
@@ -38,8 +46,10 @@ public class Task {
     }
 
     /**
-     * Move a tarefa para IN_PROGRESS.
-     * Regra: Só é possível se houver um owner atribuído e não estiver BLOCKED.
+     * Move a tarefa para o estado {@link TaskStatus.IN_PROGRESS} e atualiza
+     * a carga de trabalho ativa (activeWorkload).
+     * Ignora se já estiver em progresso. Falha se não houver um {@link User}
+     * atribuído ou se a tarefa estiver bloqueada.
      */
     public void moveToInProgress() {
         if (this.status == TaskStatus.IN_PROGRESS) {
@@ -65,8 +75,9 @@ public class Task {
     }
 
     /**
-     * Finaliza a tarefa.
-     * Regra: Só pode ser movida para DONE se não estiver BLOCKED.
+     * Finaliza a tarefa, movendo-a para {@link TaskStatus#DONE}.
+     * Falha se a tarefa estiver bloqueada. Se a tarefa estava em andamento,
+     * decrementa a carga de trabalho ativa.
      */
     public void markAsDone() {
         if (status != TaskStatus.BLOCKED) {
@@ -80,6 +91,11 @@ public class Task {
         }
     }
 
+    /**
+     * Altera o estado de bloqueio da tarefa.
+     * Falha ao tentar bloquear uma tarefa já concluída. Se a flag for falsa
+     * e a tarefa estiver bloqueada, ela retorna para o estado inicial.
+     */
     public void setBlocked(boolean blocked) {
         if (blocked) {
             if (status == TaskStatus.DONE) {
@@ -88,10 +104,14 @@ public class Task {
 
             this.status = TaskStatus.BLOCKED;
         } else if (status == TaskStatus.BLOCKED) {
-            this.status = TaskStatus.TO_DO; // Simplificação para o Lab
+            this.status = TaskStatus.TO_DO;
         }
     }
 
+    /**
+     * Método que atribuí a mudança de estado para os métodos específicos
+     * com base no {@link TaskStatus} fornecido.
+     */
     public void changeStatus(TaskStatus status) {
         if (status == TaskStatus.BLOCKED) {
             setBlocked(true);
@@ -103,7 +123,7 @@ public class Task {
             markAsDone();
         }
         else if (status == TaskStatus.TO_DO) {
-            status = TaskStatus.TO_DO;
+            this.status = TaskStatus.TO_DO;
         }
         else {
             throwNexusError("Incapaz de mudar status da task.");

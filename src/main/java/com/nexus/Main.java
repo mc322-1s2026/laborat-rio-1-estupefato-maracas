@@ -2,8 +2,8 @@ package com.nexus;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.List;
 import java.util.Scanner;
+import java.util.List;
 
 import com.nexus.exception.NexusValidationException;
 import com.nexus.model.Project;
@@ -100,13 +100,13 @@ public class Main {
             workspace.addUser(newUser);
             System.out.println("[OK] Usuário cadastrado.");
         } catch (IllegalArgumentException e) {
-            System.err.println("[ERRO DE INPUT] " + e.getMessage());
+            System.err.println("[ERRO DE ENTRADA] " + e.getMessage());
         }
     }
 
     /**
      * Cria um novo {@link Project} com o nome e orçamento (em horas) fornecidos
-     * pelo usuário, e então o adiciona ao backlog de projetos.
+     * pelo usuário, o adicionando ao backlog de projetos.
      * O nome de cada projeto deve ser único.
      * Erros são relatados no stderr.
      */
@@ -115,7 +115,7 @@ public class Main {
         String projectName = scanner.nextLine().strip();
         
         if (workspace.findProjectByName(projectName) != null) {
-            System.err.println("[ERRO DE INPUT] Já existe outro projeto com esse nome.");
+            System.err.println("[ERRO DE ENTRADA] Já existe outro projeto com esse nome.");
             return;
         }
 
@@ -124,7 +124,7 @@ public class Main {
         try {
             budgetHours = Integer.parseInt(scanner.nextLine());
         } catch (NumberFormatException e) {
-            System.err.println("[ERRO DE INPUT] Parâmetro de horas inválido, digite um número inteiro.");
+            System.err.println("[ERRO DE ENTRADA] Parâmetro de horas inválido, digite um número inteiro.");
             return;
         }
 
@@ -148,7 +148,7 @@ public class Main {
         try {
             deadline = LocalDate.parse(scanner.nextLine());
         } catch (DateTimeParseException e) {
-            System.err.println("[ERRO DE INPUT] Formato de data inválido. Use AAAA-MM-DD.");
+            System.err.println("[ERRO DE ENTRADA] Formato de data inválido. Use AAAA-MM-DD.");
             return;
         }
         
@@ -157,7 +157,7 @@ public class Main {
         try {
             effort = Integer.parseInt(scanner.nextLine());
         } catch (NumberFormatException e) {
-            System.err.println("[ERRO DE INPUT] Parâmetro de horas inválido, digite um número inteiro.");
+            System.err.println("[ERRO DE ENTRADA] Parâmetro de horas inválido, digite um número inteiro.");
             return;
         }
         
@@ -166,7 +166,7 @@ public class Main {
         
         Project project = workspace.findProjectByName(projectName);
         if (project == null) {
-            System.err.println("[ERRO DE INPUT] Não existe um projeto com esse nome.");
+            System.err.println("[ERRO DE ENTRADA] Não existe um projeto com esse nome.");
             return;
         }
 
@@ -183,6 +183,12 @@ public class Main {
         }
     }
 
+    /**
+     * Solicita ao usuário o ID de uma tarefa e o nome de um {@link User},
+     * realizando a atribuição (owner) da tarefa caso ambos existam.
+     * Erros de formatação de ID ou violações de regras de negócio 
+     * são relatados no fluxo de erro stderr.
+     */
     public static void assignUser() {
         System.out.println("Id da Tarefa: ");
         String id = scanner.nextLine();
@@ -194,7 +200,7 @@ public class Main {
                 return;
             }
         } catch (NumberFormatException e) {
-            System.err.println("[ERRO DE INPUT] Parâmetro inválido, digite número inteiro.");
+            System.err.println("[ERRO DE ENTRADA] Parâmetro inválido, digite número inteiro.");
             return;
         }
 
@@ -215,6 +221,12 @@ public class Main {
         }
     }
 
+    /**
+     * Solicita o ID de uma tarefa e o novo estado desejado,
+     * acionando a máquina de estados para realizar a transição na {@link Task}.
+     * Erros de digitação de status ou violações das regras de transição
+     * são relatados no fluxo de erro stderr.
+     */
     public static void changeStatus() {
         System.out.println("Id da Tarefa: ");
         String id = scanner.nextLine();
@@ -226,7 +238,7 @@ public class Main {
                 return;
             }
         } catch (NumberFormatException e) {
-            System.err.println("[ERRO DE INPUT] Parâmetro inválido, digite número inteiro.");
+            System.err.println("[ERRO DE ENTRADA] Parâmetro inválido, digite número inteiro.");
             return;
         }
 
@@ -241,15 +253,28 @@ public class Main {
             System.out.println("[OK] Status alterado com sucesso para " + novoStatus);
             
         } catch (IllegalArgumentException e) {
-            System.err.println("[ERRO DE INPUT] Status '" + statusStr + "' não existe. Use: TO_DO, IN_PROGRESS, BLOCKED ou DONE.");
+            System.err.println("[ERRO DE ENTRADA] Status '" + statusStr + "' não existe. Use: TO_DO, IN_PROGRESS, BLOCKED ou DONE.");
             
         } catch (NexusValidationException e) {
             System.err.println("[ERRO DE REGRAS] " + e.getMessage());
         }
     }
 
+    /**
+     * Exibe no console um painel analítico com métricas globais do sistema.
+     * Invoca os relatórios do {@link Workspace} para listar top performers,
+     * usuários sobrecarregados, gargalos globais e a saúde atual dos projetos.
+     */
     public static void reportStatus() {
-        
+        System.out.println("\n====== NEXUS GLOBAL REPORT ======");
+        System.out.println("Total de Tarefas Criadas: " + Task.totalTasksCreated);
+        System.out.println("Total de Erros de Regra: " + Task.totalValidationErrors);
+        System.out.println("Carga de Trabalho Ativa: " + Task.activeWorkload);
+        System.out.println("\nRelatórios analíticos:");
+        workspace.printTopPerformers();
+        workspace.printOverloadedUsers();
+        workspace.printProjectHealth();
+        workspace.printGlobalBottleneck();
     }
 
     /**
