@@ -51,6 +51,19 @@ public class Workspace {
                        .orElse(null);
     }
 
+    public List<User> topPerformers(int n) {
+        return tasks.stream()
+            .filter(t -> t.getStatus() == TaskStatus.DONE)
+            .map(t -> t.getOwner())
+            .filter(t -> t != null)
+            .collect(Collectors.groupingBy(user -> user, Collectors.counting()))
+            .entrySet().stream()
+            .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+            .limit(n)
+            .map(p -> p.getKey())
+            .toList();
+    }
+
     public List<User> overloadedUsers() {
         return users.stream()
                     .filter(u -> u.getWorkload(tasks) >= 10)
@@ -81,18 +94,6 @@ public class Workspace {
                     .filter(t -> t.getStatus() == TaskStatus.DONE
                             && t.getOwner() != null && t.getOwner().equals(u))
                     .count();
-    }
-
-    public List<User> topPerformers(int n) {
-        return tasks.stream()
-            .filter(t -> t.getStatus() == TaskStatus.DONE)
-            .map(t -> t.getOwner())
-            .collect(Collectors.groupingBy(user -> user, Collectors.counting()))
-            .entrySet().stream()
-            .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
-            .limit(n)
-            .map(p -> p.getKey())
-            .toList();
     }
 
     public List<Task> getTasks() {return Collections.unmodifiableList(tasks); }

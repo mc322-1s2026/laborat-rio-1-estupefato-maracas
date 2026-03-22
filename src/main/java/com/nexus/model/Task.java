@@ -42,15 +42,17 @@ public class Task {
      * Regra: Só é possível se houver um owner atribuído e não estiver BLOCKED.
      */
     public void moveToInProgress() {
-        // TODO: Implementar lógica de proteção e atualizar activeWorkload
-        // Se falhar, incrementar totalValidationErrors e lançar NexusValidationException
-        if (this.owner != null && this.status == TaskStatus.TO_DO) {
-            this.status = TaskStatus.IN_PROGRESS;
-            activeWorkload++;
+        if (this.status == TaskStatus.IN_PROGRESS) {
+            return;
         }
-        else {
-            throwNexusError("Estado da Task não pode ser alterado.");
+        if (this.owner == null) {
+            throwNexusError("Delegue a tarefa a um usuário para poder deixá-la em progresso.");
         }
+        if (this.status == TaskStatus.BLOCKED) {
+            throwNexusError("Tarefa bloqueada, não pode entrar em progresso.");
+        }
+        this.status = TaskStatus.IN_PROGRESS;
+        activeWorkload++;
     }
 
     public void assignUser(User user) {
@@ -67,7 +69,6 @@ public class Task {
      * Regra: Só pode ser movida para DONE se não estiver BLOCKED.
      */
     public void markAsDone() {
-        // TODO: Implementar lógica de proteção e atualizar activeWorkload (decrementar)
         if (status != TaskStatus.BLOCKED) {
             if (status == TaskStatus.IN_PROGRESS) {
                 activeWorkload--;
