@@ -25,54 +25,87 @@ public class LogProcessor {
                 for (String line : lines) {
                     if (line.isBlank() || line.startsWith("#")) continue;
 
-                    String[] p = line.split(";");
-                    String action = p[0];
-
-                    try {
-                        switch (action) {
-                            case "CREATE_USER" -> {
-                                workspace.addUser(new User(p[1], p[2]));
-                                System.out.println("[LOG] Usuário criado: " + p[1]);
-                            }
-                            case "CREATE_PROJECT" -> {
-                                Project project = new Project(p[1], Integer.parseInt(p[2]));
-                                workspace.addProject(project);
-                                System.out.println("[LOG] Projeto criado: " + p[1]);
-                            }
-                            case "CREATE_TASK" -> {
-                                Task t = new Task(p[1], LocalDate.parse(p[2]), Integer.parseInt(p[3]), p[4]);
-                                workspace.addTask(t);
-                                Project project = workspace.findProjectByName(p[4]);
-                                if (project != null) {
-                                    project.addTask(t);
-                                }
-
-                                System.out.println("[LOG] Tarefa criada: " + p[1]);
-                            }
-                            case "ASSIGN_USER" -> {
-                                Task task = workspace.findTaskById(Integer.parseInt(p[1]));
-                                task.assignUser(workspace.findUserByName(p[2]));
-                                System.out.println("[LOG] Tarefa atribuída a usuário");
-                            }
-                            case "CHANGE_STATUS" -> {
-                                Task task = workspace.findTaskById(Integer.parseInt(p[1]));
-                                task.changeStatus(TaskStatus.valueOf(p[2]));
-                                System.out.println("[LOG] Status alterado com sucesso");
-                            }
-                            case "REPORT_STATUS" -> {
-                                // continue when stream api at workspace when is done
-                            }
-                            default -> System.err.println("[WARN] Ação desconhecida: " + action);
-                        }
-                    } catch (NexusValidationException e) {
-                        System.err.println("[ERRO DE REGRAS] Falha no comando '" + line + "': " + e.getMessage());
-                    } catch (IllegalArgumentException | DateTimeParseException e) {
-                        System.err.println("[ERRO DE INPUT] Input incorreto no comando '" + line + "': " +  e.getMessage());
-                    }
+                    processLine(workspace, line);
                 }
             }
         } catch (IOException e) {
             System.err.println("[ERRO FATAL] " + e.getMessage());
         }
+    }
+
+    private void processLine(Workspace workspace, String line) {
+        String[] p = line.split(";");
+        String action = p[0];
+
+        try {
+            switch (action) {
+                case "CREATE_USER" -> createUser(workspace, p);
+                case "CREATE_PROJECT" -> createProject(workspace, p);
+                case "CREATE_TASK" -> createTask(workspace, p);
+                case "ASSIGN_USER" -> assignUser(workspace, p);
+                case "CHANGE_STATUS" -> changeStatus(workspace, p);
+                case "REPORT_STATUS" -> reportStatus(workspace, p);
+                default -> System.err.println("[WARN] Ação desconhecida: " + action);
+            }
+        } catch (NexusValidationException e) {
+            System.err.println(String.format(
+                    "[ERRO DE REGRAS] Falha no comando '%s': %s", line, e.getMessage()));
+        } catch (IllegalArgumentException | DateTimeParseException e) {
+            System.err.println(String.format(
+                    "[ERRO DE INPUT] Input incorreto no comando '%s': %s", line, e.getMessage()));
+        }
+    }
+
+    private void createUser(Workspace workspace, String[] p) {
+        workspace.addUser(new User(p[1], p[2]));
+        System.out.println("[LOG] Usuário criado: " + p[1]);
+    }
+
+    private void createProject(Workspace workspace, String[] p) {
+        Project project = new Project(p[1], Integer.parseInt(p[2]));
+        workspace.addProject(project);
+        System.out.println("[LOG] Projeto criado: " + p[1]);
+    }
+
+    private void createTask(Workspace workspace, String[] p) {
+        Task t = new Task(p[1], LocalDate.parse(p[2]), Integer.parseInt(p[3]), p[4]);
+        workspace.addTask(t);
+        Project project = workspace.findProjectByName(p[4]);
+        if (project != null) {
+            project.addTask(t);
+        }
+
+        System.out.println("[LOG] Tarefa criada: " + p[1]);
+    }
+
+    private void assignUser(Workspace workspace, String[] p) {
+        Task task = workspace.findTaskById(Integer.parseInt(p[1]));
+        task.assignUser(workspace.findUserByName(p[2]));
+        System.out.println("[LOG] Tarefa atribuída a usuário");
+    }
+
+    private void changeStatus(Workspace workspace, String[] p) {
+        Task task = workspace.findTaskById(Integer.parseInt(p[1]));
+        task.changeStatus(TaskStatus.valueOf(p[2]));
+        System.out.println("[LOG] Status alterado com sucesso");
+    }
+
+    private void reportStatus(Workspace workspace, String[] p) {
+        System.out.println("[LOG] Relatórios analíticos:");
+        System.out.print("    - Top 3 Performers: | ");
+        int i = 1;
+        for (User user: workspace.topPerformers(3)) {
+            System.out.printf("#%d %s | ", i++, user.getUsername());
+        }
+        System.out.println();
+        System.out.println("    - Overloaded Users: " + workspace.overloadedUsers());
+        System.out.println("    - Project Health: ");
+        workspace.getProjects().stream()
+                .forEach(proj -> System.out.printf(
+                        "        - %s: %d%%\n",
+                        proj.getName(),
+                        Math.round(workspace.projectHealth(proj) * 100)
+                    ));
+        System.out.println("    - Global Bottleneck: " + workspace.globalBottleneck());
     }
 }

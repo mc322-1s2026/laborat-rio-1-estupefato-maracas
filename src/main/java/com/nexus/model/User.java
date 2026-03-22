@@ -27,6 +27,11 @@ public class User {
         return !emailPattern.matcher(email).matches();
     }
 
+    @Override
+    public String toString() {
+        return getUsername();
+    }
+
     public String getEmail() {
         return email;
     }
