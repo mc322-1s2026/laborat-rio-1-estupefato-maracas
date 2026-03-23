@@ -53,6 +53,9 @@ public class LogProcessor {
         } catch (IllegalArgumentException | DateTimeParseException e) {
             System.err.println(String.format(
                     "[ERRO DE INPUT] Input incorreto no comando '%s': %s", line, e.getMessage()));
+        } catch (NullPointerException e) {
+            System.err.println(String.format(
+                    "[ERRO DE INPUT] Tarefa não existe no comando '%s': %s", line, e.getMessage()));
         }
     }
 
@@ -86,6 +89,9 @@ public class LogProcessor {
 
     private void changeStatus(Workspace workspace, String[] p) {
         Task task = workspace.findTaskById(Integer.parseInt(p[1]));
+        if (task == null) {
+            Task.throwNexusError("Tarefa não existe.");
+        }
         task.changeStatus(TaskStatus.valueOf(p[2]));
         System.out.println("[LOG] Status alterado com sucesso");
     }
